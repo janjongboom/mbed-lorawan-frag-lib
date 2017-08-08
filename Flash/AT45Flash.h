@@ -7,7 +7,7 @@
 
 class AT45Flash : public IFlash {
 public:
-    AT45Flash() : spi(SPI_MOSI, SPI_MISO, SPI_SCK, SPI_NSS), at45(spi, SPI_NSS) {
+    AT45Flash() : spi(SPI_MOSI, SPI_MISO, SPI_SCK, SPI_NSS), at45(&spi, SPI_NSS) {
         pagesize = at45.pagesize();
 
         // should this move to an init call? can't throw in ctor

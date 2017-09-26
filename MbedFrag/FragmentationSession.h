@@ -20,6 +20,7 @@
 
 #include "mbed.h"
 #include "FragmentationMath.h"
+#include "mbed_debug.h"
 
 /**
  * The binary is laid out like this:
@@ -74,7 +75,7 @@ public:
     FragResult initialize() {
         // initialize the memory required for the Math module
         if (!_math.initialize()) {
-            printf("[FragmentationSession] Could not initialize FragmentationMath\n");
+            debug("[FragmentationSession] Could not initialize FragmentationMath\n");
             return FRAG_NO_MEMORY;
         }
 

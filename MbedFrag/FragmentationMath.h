@@ -30,14 +30,14 @@ class FragmentationMath
   public:
     /**
      * FragmentationMath
-     * Initializes the magic Semtech library.
+     * Initializes Semtech's library for Low-Density Parity Check Coding
      *
-     * @param flash          Instance of IFlash
+     * @param flash          Instance of BlockDevice
      * @param frame_count    Number of expected fragments (without redundancy packets)
      * @param frame_size     Size of a fragment (without LoRaWAN header)
      * @param redundancy_max Maximum number of redundancy packets
      */
-    FragmentationMath(IFlash *flash, uint16_t frame_count, uint8_t frame_size, uint16_t redundancy_max)
+    FragmentationMath(BlockDevice *flash, uint16_t frame_count, uint8_t frame_size, uint16_t redundancy_max)
         : _flash(flash), _frame_count(frame_count), _frame_size(frame_size), _redundancy_max(redundancy_max)
     {
     }
@@ -246,12 +246,12 @@ class FragmentationMath
   private:
     void GetRowInFlash(int l, uint8_t *rowData)
     {
-        _flash->read(l * _frame_size, rowData, _frame_size);
+        _flash->read(rowData, l * _frame_size, _frame_size);
     }
 
     void StoreRowInFlash(uint8_t *rowData, int index)
     {
-        _flash->write(_frame_size * index, rowData, _frame_size);
+        _flash->program(rowData, _frame_size * index, _frame_size);
     }
 
     uint16_t FindMissingFrameIndex(uint16_t x)
@@ -537,7 +537,7 @@ class FragmentationMath
         }
     }
 
-    IFlash *_flash;
+    BlockDevice *_flash;
     uint16_t _frame_count;
     uint8_t _frame_size;
     uint16_t _redundancy_max;

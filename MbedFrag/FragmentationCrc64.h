@@ -19,7 +19,6 @@
 #define _MBEDFRAG_FRAGMENTATION_CRC64_H_
 
 #include "mbed.h"
-#include "IFlash.h"
 #include "crc.h"
 
 class FragmentationCrc64 {
@@ -27,11 +26,11 @@ public:
     /**
      * Calculate the CRC64 hash of a file in flash
      *
-     * @param flash         Instance of IFlash
+     * @param flash         Instance of BlockDevice
      * @param buffer        A buffer to be used to read into
      * @param buffer_size   The size of the buffer
      */
-    FragmentationCrc64(IFlash* flash, uint8_t* buffer, size_t buffer_size)
+    FragmentationCrc64(BlockDevice* flash, uint8_t* buffer, size_t buffer_size)
         : _flash(flash), _buffer(buffer), _buffer_size(buffer_size)
     {
     }
@@ -54,7 +53,7 @@ public:
             size_t length = _buffer_size;
             if (length > bytes_left) length = bytes_left;
 
-            _flash->read(offset, _buffer, length);
+            _flash->read(_buffer, offset, length);
 
             crc = crc64(crc, _buffer, length);
 
@@ -66,7 +65,7 @@ public:
     }
 
 private:
-    IFlash* _flash;
+    BlockDevice* _flash;
     uint8_t* _buffer;
     size_t _buffer_size;
 };

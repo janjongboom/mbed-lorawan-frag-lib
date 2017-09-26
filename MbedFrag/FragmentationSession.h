@@ -19,7 +19,6 @@
 #define _MBEDFRAG_FRAGMENTATION_SESSION_H
 
 #include "mbed.h"
-#include "IFlash.h"
 #include "FragmentationMath.h"
 
 /**
@@ -52,7 +51,7 @@ public:
      * @param flash A flash interface
      * @param opts  List of options for this session
      */
-    FragmentationSession(IFlash* flash, FragmentationSessionOpts_t opts)
+    FragmentationSession(BlockDevice* flash, FragmentationSessionOpts_t opts)
         : _flash(flash), _opts(opts),
           _math(flash, opts.NumberOfFragments, opts.FragmentSize, opts.RedundancyPackets)
     {
@@ -102,7 +101,7 @@ public:
         // the first X packets contain the binary as-is... If that is the case, just store it in flash.
         // index is 1-based
         if (index <= _opts.NumberOfFragments) {
-            int r = _flash->write((index - 1) * size, buffer, size);
+            int r = _flash->program(buffer, (index - 1) * size, size);
             if (r != 0) {
                 return FRAG_FLASH_WRITE_ERROR;
             }
@@ -152,7 +151,7 @@ public:
     }
 
 private:
-    IFlash* _flash;
+    BlockDevice* _flash;
     FragmentationSessionOpts_t _opts;
     FragmentationMath _math;
 };

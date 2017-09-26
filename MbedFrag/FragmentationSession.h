@@ -20,6 +20,7 @@
 
 #include "mbed.h"
 #include "FragmentationMath.h"
+#include "mbed_debug.h"
 
 /**
  * The binary is laid out like this:
@@ -55,11 +56,11 @@ public:
         : _flash(flash), _opts(opts),
           _math(flash, opts.NumberOfFragments, opts.FragmentSize, opts.RedundancyPackets)
     {
-        printf("FragmentationSession starting:\n");
-        printf("\tNumberOfFragments:   %d\n", opts.NumberOfFragments);
-        printf("\tFragmentSize:        %d\n", opts.FragmentSize);
-        printf("\tPadding:             %d\n", opts.Padding);
-        printf("\tMaxRedundancy:       %d\n", opts.RedundancyPackets);
+        debug("FragmentationSession starting:\n");
+        debug("\tNumberOfFragments:   %d\n", opts.NumberOfFragments);
+        debug("\tFragmentSize:        %d\n", opts.FragmentSize);
+        debug("\tPadding:             %d\n", opts.Padding);
+        debug("\tMaxRedundancy:       %d\n", opts.RedundancyPackets);
     }
 
     /**
@@ -72,13 +73,13 @@ public:
     FragResult initialize() {
         // initialize the memory required for the Math module
         if (!_math.initialize()) {
-            printf("[FragmentationSession] Could not initialize FragmentationMath\n");
+            debug("[FragmentationSession] Could not initialize FragmentationMath\n");
             return FRAG_NO_MEMORY;
         }
 
         // also clear out the flash pages...
         if (_flash->erase(0, _opts.NumberOfFragments * _opts.FragmentSize) != 0) {
-            printf("[FragmentationSession] Could not clear out flash\n");
+            debug("[FragmentationSession] Could not clear out flash\n");
             return FRAG_FLASH_WRITE_ERROR;
         }
 

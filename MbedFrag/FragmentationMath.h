@@ -14,6 +14,7 @@ Description: 	Firmware update over the air with LoRa proof of concept
 #define _MBEDFRAG_FRAGMENTATION_MATH_H
 
 #include "mbed.h"
+#include "mbed_debug.h"
 
 #define FRAG_SESSION_ONGOING    0xffffffff
 
@@ -102,7 +103,7 @@ class FragmentationMath
 
         if (!matrixM2B || !missingFrameIndex || !matrixRow || !matrixDataTemp || !dataTempVector || !dataTempVector2 || !s)
         {
-            printf("[FragmentationMath] Could not allocate memory...\n");
+            debug("[FragmentationMath] Could not allocate memory...\n");
             return false;
         }
 
@@ -301,7 +302,7 @@ class FragmentationMath
         int i;
         uint8_t *dataTemp = (uint8_t *)malloc(size);
         if (!dataTemp)
-            printf("[FragmentationMath] XorLineData malloc out of memory!\n");
+            debug("[FragmentationMath] XorLineData malloc out of memory!\n");
 
         for (i = 0; i < size; i++)
         {
@@ -326,7 +327,7 @@ class FragmentationMath
         int i;
         bool *dataTemp = (bool *)malloc(size);
         if (!dataTemp)
-            printf("[FragmentationMath] XorLineBool malloc failed\n");
+            debug("[FragmentationMath] XorLineBool malloc failed\n");
 
         for (i = 0; i < size; i++)
         {

@@ -44,7 +44,7 @@ public:
      * @returns CRC64 hash of the file
      */
     uint64_t calculate(uint32_t address, size_t size) {
-        size_t offset = 0;
+        size_t offset = address;
         size_t bytes_left = size;
 
         uint64_t crc = 0;

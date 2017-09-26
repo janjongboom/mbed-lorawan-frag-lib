@@ -31,6 +31,7 @@ typedef struct {
     uint8_t  FragmentSize;      // Size of each fragment in bytes, **without the fragindex**
     uint8_t  Padding;           // Bytes of padding after the last original fragment
     uint16_t RedundancyPackets; // Max. number of redundancy packets we'll receive
+    size_t   FlashOffset;       // Place in flash where the final binary needs to be placed
 } FragmentationSessionOpts_t;
 
 enum FragResult {
@@ -53,13 +54,14 @@ public:
      */
     FragmentationSession(BlockDevice* flash, FragmentationSessionOpts_t opts)
         : _flash(flash), _opts(opts),
-          _math(flash, opts.NumberOfFragments, opts.FragmentSize, opts.RedundancyPackets)
+          _math(flash, opts.NumberOfFragments, opts.FragmentSize, opts.RedundancyPackets, opts.FlashOffset)
     {
         printf("FragmentationSession starting:\n");
         printf("\tNumberOfFragments:   %d\n", opts.NumberOfFragments);
         printf("\tFragmentSize:        %d\n", opts.FragmentSize);
         printf("\tPadding:             %d\n", opts.Padding);
         printf("\tMaxRedundancy:       %d\n", opts.RedundancyPackets);
+        printf("\tFlashOffset:         0x%x\n", opts.FlashOffset);
     }
 
     /**
@@ -77,7 +79,7 @@ public:
         }
 
         // also clear out the flash pages...
-        if (_flash->erase(0, _opts.NumberOfFragments * _opts.FragmentSize) != 0) {
+        if (_flash->erase(_opts.FlashOffset, _opts.NumberOfFragments * _opts.FragmentSize) != 0) {
             printf("[FragmentationSession] Could not clear out flash\n");
             return FRAG_FLASH_WRITE_ERROR;
         }
@@ -101,7 +103,7 @@ public:
         // the first X packets contain the binary as-is... If that is the case, just store it in flash.
         // index is 1-based
         if (index <= _opts.NumberOfFragments) {
-            int r = _flash->program(buffer, (index - 1) * size, size);
+            int r = _flash->program(buffer, _opts.FlashOffset + ((index - 1) * size), size);
             if (r != 0) {
                 return FRAG_FLASH_WRITE_ERROR;
             }

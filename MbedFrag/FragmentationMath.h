@@ -37,8 +37,8 @@ class FragmentationMath
      * @param frame_size     Size of a fragment (without LoRaWAN header)
      * @param redundancy_max Maximum number of redundancy packets
      */
-    FragmentationMath(BlockDevice *flash, uint16_t frame_count, uint8_t frame_size, uint16_t redundancy_max)
-        : _flash(flash), _frame_count(frame_count), _frame_size(frame_size), _redundancy_max(redundancy_max)
+    FragmentationMath(BlockDevice *flash, uint16_t frame_count, uint8_t frame_size, uint16_t redundancy_max, size_t flash_offset)
+        : _flash(flash), _frame_count(frame_count), _frame_size(frame_size), _redundancy_max(redundancy_max), _flash_offset(flash_offset)
     {
     }
 
@@ -246,12 +246,12 @@ class FragmentationMath
   private:
     void GetRowInFlash(int l, uint8_t *rowData)
     {
-        _flash->read(rowData, l * _frame_size, _frame_size);
+        _flash->read(rowData, _flash_offset + (l * _frame_size), _frame_size);
     }
 
     void StoreRowInFlash(uint8_t *rowData, int index)
     {
-        _flash->program(rowData, _frame_size * index, _frame_size);
+        _flash->program(rowData, _flash_offset + (_frame_size * index), _frame_size);
     }
 
     uint16_t FindMissingFrameIndex(uint16_t x)
@@ -541,6 +541,7 @@ class FragmentationMath
     uint16_t _frame_count;
     uint8_t _frame_size;
     uint16_t _redundancy_max;
+    size_t _flash_offset;
 
     uint8_t *matrixM2B;
     uint16_t *missingFrameIndex;

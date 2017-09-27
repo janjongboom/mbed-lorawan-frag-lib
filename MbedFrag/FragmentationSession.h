@@ -57,12 +57,12 @@ public:
         : _flash(flash), _opts(opts),
           _math(flash, opts.NumberOfFragments, opts.FragmentSize, opts.RedundancyPackets, opts.FlashOffset)
     {
-        printf("FragmentationSession starting:\n");
-        printf("\tNumberOfFragments:   %d\n", opts.NumberOfFragments);
-        printf("\tFragmentSize:        %d\n", opts.FragmentSize);
-        printf("\tPadding:             %d\n", opts.Padding);
-        printf("\tMaxRedundancy:       %d\n", opts.RedundancyPackets);
-        printf("\tFlashOffset:         0x%x\n", opts.FlashOffset);
+        debug("FragmentationSession starting:\n");
+        debug("\tNumberOfFragments:   %d\n", opts.NumberOfFragments);
+        debug("\tFragmentSize:        %d\n", opts.FragmentSize);
+        debug("\tPadding:             %d\n", opts.Padding);
+        debug("\tMaxRedundancy:       %d\n", opts.RedundancyPackets);
+        debug("\tFlashOffset:         0x%x\n", opts.FlashOffset);
     }
 
     /**
@@ -81,7 +81,7 @@ public:
 
         // also clear out the flash pages...
         if (_flash->erase(_opts.FlashOffset, _opts.NumberOfFragments * _opts.FragmentSize) != 0) {
-            printf("[FragmentationSession] Could not clear out flash\n");
+            debug("[FragmentationSession] Could not clear out flash\n");
             return FRAG_FLASH_WRITE_ERROR;
         }
 

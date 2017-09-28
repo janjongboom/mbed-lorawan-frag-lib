@@ -85,6 +85,7 @@ class FragmentationMath
     {
         // global for this session
         matrixM2B = (uint8_t *)calloc((_redundancy_max / 8) * _redundancy_max, 1);
+
         missingFrameIndex = (uint16_t *)calloc(_frame_count, sizeof(uint16_t));
         for (size_t ix = 0; ix < _frame_count; ix++)
         {

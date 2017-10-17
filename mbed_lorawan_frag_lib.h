@@ -19,6 +19,7 @@
 #define _MBED_LORAWAN_FRAG_LIB_H
 
 #include "FragmentationCrc64.h"
+#include "FragmentationEcdsaVerify.h"
 #include "FragmentationRsaVerify.h"
 #include "FragmentationSha256.h"
 #include "FragmentationMath.h"

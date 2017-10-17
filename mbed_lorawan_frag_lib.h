@@ -24,5 +24,6 @@
 #include "FragmentationSha256.h"
 #include "FragmentationMath.h"
 #include "FragmentationSession.h"
+#include "BDFile.h"
 
 #endif // _MBED_LORAWAN_FRAG_LIB_H

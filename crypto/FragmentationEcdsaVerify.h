@@ -18,6 +18,14 @@
 #ifndef _FRAGMENTATION_ECDSA_VERIFY_H_
 #define _FRAGMENTATION_ECDSA_VERIFY_H_
 
+#if !defined(MBEDTLS_CONFIG_FILE)
+#include "mbedtls/config.h"
+#else
+#include MBEDTLS_CONFIG_FILE
+#endif
+
+#if defined(MBEDTLS_ECDSA_C)
+
 #include "mbed.h"
 #include "mbedtls/pk.h"
 #include "mbed_debug.h"
@@ -67,5 +75,7 @@ private:
     size_t pubKeySize;
     mbedtls_pk_context pk;
 };
+
+#endif // defined(MBEDTLS_ECDSA_C)
 
 #endif // _FRAGMENTATION_ECDSA_VERIFY_H_

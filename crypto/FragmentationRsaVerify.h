@@ -18,6 +18,14 @@
 #ifndef _FRAGMENTATION_RSA_DECRYPT_H_
 #define _FRAGMENTATION_RSA_DECRYPT_H_
 
+#if !defined(MBEDTLS_CONFIG_FILE)
+#include "mbedtls/config.h"
+#else
+#include MBEDTLS_CONFIG_FILE
+#endif
+
+#if defined(MBEDTLS_RSA_C)
+
 #include "mbed.h"
 #include "mbedtls/pk.h"
 #include "mbed_debug.h"
@@ -68,5 +76,7 @@ private:
     size_t publicKeySize;
     mbedtls_rsa_context rsa;
 };
+
+#endif // MBEDTLS_RSA_C
 
 #endif // _FRAGMENTATION_RSA_DECRYPT_H_

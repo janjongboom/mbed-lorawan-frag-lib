@@ -18,6 +18,14 @@
 #ifndef _MBEDFRAG_FRAGMENTATION_SHA256_H_
 #define _MBEDFRAG_FRAGMENTATION_SHA256_H_
 
+#if !defined(MBEDTLS_CONFIG_FILE)
+#include "mbedtls/config.h"
+#else
+#include MBEDTLS_CONFIG_FILE
+#endif
+
+#if defined(MBEDTLS_SHA256_C)
+
 #include "mbed.h"
 #include "sha256.h"
 
@@ -72,5 +80,7 @@ private:
     size_t _buffer_size;
     mbedtls_sha256_context _sha256_ctx;
 };
+
+#endif
 
 #endif // _MBEDFRAG_FRAGMENTATION_SHA256_H_

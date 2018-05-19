@@ -20,7 +20,9 @@
 
 #include "mbed.h"
 #include "FragmentationMath.h"
-#include "mbed_debug.h"
+
+#include "mbed-trace/mbed_trace.h"
+#define TRACE_GROUP  "FSES"
 
 /**
  * The binary is laid out like this:
@@ -32,7 +34,6 @@ typedef struct {
     uint8_t  FragmentSize;      // Size of each fragment in bytes, **without the fragindex**
     uint8_t  Padding;           // Bytes of padding after the last original fragment
     uint16_t RedundancyPackets; // Max. number of redundancy packets we'll receive
-    size_t   FlashOffset;       // Place in flash where the final binary needs to be placed
 } FragmentationSessionOpts_t;
 
 enum FragResult {
@@ -40,6 +41,7 @@ enum FragResult {
     FRAG_SIZE_INCORRECT,
     FRAG_FLASH_WRITE_ERROR,
     FRAG_NO_MEMORY,
+    FRAG_INVALID_FILE_PTR,
     FRAG_COMPLETE
 };
 
@@ -50,40 +52,68 @@ class FragmentationSession {
 public:
     /**
      * Start a fragmentation session
-     * @param flash A flash interface
-     * @param opts  List of options for this session
+     * @param file      File to be used to write the fragmentation session; will be set to the correct size in initialize()
+     * @param opts      List of options for this session
      */
-    FragmentationSession(BlockDevice* flash, FragmentationSessionOpts_t opts)
-        : _flash(flash), _opts(opts),
-          _math(flash, opts.NumberOfFragments, opts.FragmentSize, opts.RedundancyPackets, opts.FlashOffset)
+    FragmentationSession(FILE *file, FragmentationSessionOpts_t opts)
+        : _file(file), _opts(opts),
+          _math(opts.NumberOfFragments, opts.FragmentSize, opts.RedundancyPackets)
     {
-        debug("FragmentationSession starting:\n");
-        debug("\tNumberOfFragments:   %d\n", opts.NumberOfFragments);
-        debug("\tFragmentSize:        %d\n", opts.FragmentSize);
-        debug("\tPadding:             %d\n", opts.Padding);
-        debug("\tMaxRedundancy:       %d\n", opts.RedundancyPackets);
-        debug("\tFlashOffset:         0x%x\n", opts.FlashOffset);
+        tr_debug("FragmentationSession starting:");
+        tr_debug("\tNumberOfFragments:   %d", opts.NumberOfFragments);
+        tr_debug("\tFragmentSize:        %d", opts.FragmentSize);
+        tr_debug("\tPadding:             %d", opts.Padding);
+        tr_debug("\tMaxRedundancy:       %d", opts.RedundancyPackets);
     }
 
     /**
      * Allocate the required buffers for the fragmentation session, and clears the flash pages required for the binary file.
      *
      * @returns FRAG_OK if succeeded,
+     *          FRAG_INVALID_FILE_PTR if an invalid file pointer was passed in,
      *          FRAG_NO_MEMORY if allocations failed,
      *          FRAG_FLASH_WRITE_ERROR if clearing the flash failed.
     */
     FragResult initialize() {
+        if (!_file) {
+            return FRAG_INVALID_FILE_PTR;
+        }
+
         // initialize the memory required for the Math module
-        if (!_math.initialize()) {
-            debug("[FragmentationSession] Could not initialize FragmentationMath\n");
+        if (!_math.initialize(_file)) {
+            tr_debug("Could not initialize FragmentationMath");
             return FRAG_NO_MEMORY;
         }
 
-        // also clear out the flash pages...
-        if (_flash->erase(_opts.FlashOffset, _opts.NumberOfFragments * _opts.FragmentSize) != 0) {
-            debug("[FragmentationSession] Could not clear out flash\n");
-            return FRAG_FLASH_WRITE_ERROR;
+        // move to length-1
+        const uint8_t zeros[128] = { 0 };
+
+        // search for beginning, and then clear out the complete file...
+        fseek(_file, 0, SEEK_SET);
+
+        size_t bytes_left = (_opts.NumberOfFragments * _opts.FragmentSize);
+        tr_debug("Clearing out file (%u bytes)", bytes_left);
+        while (1) {
+            if (bytes_left < sizeof(zeros)) {
+                if (fwrite(zeros, 1, bytes_left, _file) != bytes_left) {
+                    return FRAG_FLASH_WRITE_ERROR;
+                }
+                else {
+                    // OK
+                    break;
+                }
+            }
+
+            if (fwrite(zeros, 1, sizeof(zeros), _file) != sizeof(zeros)) {
+                return FRAG_FLASH_WRITE_ERROR;
+            }
+
+            bytes_left -= sizeof(zeros);
         }
+
+        tr_debug("Cleared out file");
+
+        fseek(_file, 0, SEEK_SET);
 
         return FRAG_OK;
     }
@@ -104,8 +134,13 @@ public:
         // the first X packets contain the binary as-is... If that is the case, just store it in flash.
         // index is 1-based
         if (index <= _opts.NumberOfFragments) {
-            int r = _flash->program(buffer, _opts.FlashOffset + ((index - 1) * size), size);
-            if (r != 0) {
+            if (fseek(_file, ((index - 1) * size), SEEK_SET) != 0) {
+                tr_debug("Could not fseek");
+                return FRAG_FLASH_WRITE_ERROR;
+            }
+
+            if (fwrite(buffer, 1, size, _file) != size) {
+                tr_debug("Could not fwrite");
                 return FRAG_FLASH_WRITE_ERROR;
             }
 
@@ -139,6 +174,7 @@ public:
             case FRAG_SIZE_INCORRECT: return "Fragment size incorrect";
             case FRAG_FLASH_WRITE_ERROR: return "Writing to flash failed";
             case FRAG_NO_MEMORY: return "Not enough space on the heap";
+            case FRAG_INVALID_FILE_PTR: return "Invalid file pointer";
             case FRAG_COMPLETE: return "Complete";
 
             case FRAG_OK: return "OK";
@@ -154,7 +190,7 @@ public:
     }
 
 private:
-    BlockDevice* _flash;
+    FILE *_file;
     FragmentationSessionOpts_t _opts;
     FragmentationMath _math;
 };

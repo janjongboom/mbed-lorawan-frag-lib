@@ -28,7 +28,9 @@
 
 #include "mbed.h"
 #include "mbedtls/pk.h"
-#include "mbed_debug.h"
+
+#include "mbed-trace/mbed_trace.h"
+#define TRACE_GROUP  "FRSA"
 
 class FragmentationRsaVerify {
 public:
@@ -60,7 +62,7 @@ public:
 
         if( signature_size != rsa.len )
         {
-            debug("Invalid RSA signature format\n");
+            tr_debug("Invalid RSA signature format");
             return false;
         }
 

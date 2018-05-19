@@ -13,8 +13,10 @@ Description: 	Firmware update over the air with LoRa proof of concept
 #ifndef _MBEDFRAG_FRAGMENTATION_MATH_H
 #define _MBEDFRAG_FRAGMENTATION_MATH_H
 
+#include <stdio.h>
 #include "mbed.h"
-#include "mbed_debug.h"
+#include "mbed-trace/mbed_trace.h"
+#define TRACE_GROUP  "FMTH"
 
 #define FRAG_SESSION_ONGOING    0xffffffff
 
@@ -33,13 +35,12 @@ class FragmentationMath
      * FragmentationMath
      * Initializes Semtech's library for Low-Density Parity Check Coding
      *
-     * @param flash          Instance of BlockDevice
      * @param frame_count    Number of expected fragments (without redundancy packets)
      * @param frame_size     Size of a fragment (without LoRaWAN header)
      * @param redundancy_max Maximum number of redundancy packets
      */
-    FragmentationMath(BlockDevice *flash, uint16_t frame_count, uint8_t frame_size, uint16_t redundancy_max, size_t flash_offset)
-        : _flash(flash), _frame_count(frame_count), _frame_size(frame_size), _redundancy_max(redundancy_max), _flash_offset(flash_offset)
+    FragmentationMath(uint16_t frame_count, uint8_t frame_size, uint16_t redundancy_max)
+        :  _frame_count(frame_count), _frame_size(frame_size), _redundancy_max(redundancy_max)
     {
     }
 
@@ -79,10 +80,13 @@ class FragmentationMath
     /**
      * Initialize the FragmentationMath library. This function allocates the required buffers.
      *
+     * @param file   Opened file to be used to write to, needs to be of the correct size
      * @returns true if the memory was allocated, false if one or more allocations failed
      */
-    bool initialize()
+    bool initialize(FILE *file)
     {
+        _file = file;
+
         // global for this session
         matrixM2B = (uint8_t *)calloc((_redundancy_max / 8) * _redundancy_max, 1);
 
@@ -104,7 +108,7 @@ class FragmentationMath
 
         if (!matrixM2B || !missingFrameIndex || !matrixRow || !matrixDataTemp || !dataTempVector || !dataTempVector2 || !s)
         {
-            debug("[FragmentationMath] Could not allocate memory...\n");
+            tr_debug("Could not allocate memory");
             return false;
         }
 
@@ -248,12 +252,14 @@ class FragmentationMath
   private:
     void GetRowInFlash(int l, uint8_t *rowData)
     {
-        _flash->read(rowData, _flash_offset + (l * _frame_size), _frame_size);
+        fseek(_file, (l * _frame_size), SEEK_SET);
+        fread(rowData, 1, _frame_size, _file);
     }
 
     void StoreRowInFlash(uint8_t *rowData, int index)
     {
-        _flash->program(rowData, _flash_offset + (_frame_size * index), _frame_size);
+        fseek(_file, _frame_size * index, SEEK_SET);
+        fwrite(rowData, 1, _frame_size, _file);
     }
 
     uint16_t FindMissingFrameIndex(uint16_t x)
@@ -303,7 +309,7 @@ class FragmentationMath
         int i;
         uint8_t *dataTemp = (uint8_t *)malloc(size);
         if (!dataTemp)
-            debug("[FragmentationMath] XorLineData malloc out of memory!\n");
+            tr_debug("XorLineData malloc out of memory!");
 
         for (i = 0; i < size; i++)
         {
@@ -328,7 +334,7 @@ class FragmentationMath
         int i;
         bool *dataTemp = (bool *)malloc(size);
         if (!dataTemp)
-            debug("[FragmentationMath] XorLineBool malloc failed\n");
+            tr_debug("XorLineBool malloc failed");
 
         for (i = 0; i < size; i++)
         {
@@ -539,11 +545,10 @@ class FragmentationMath
         }
     }
 
-    BlockDevice *_flash;
+    FILE *_file;
     uint16_t _frame_count;
     uint8_t _frame_size;
     uint16_t _redundancy_max;
-    size_t _flash_offset;
 
     uint8_t *matrixM2B;
     uint16_t *missingFrameIndex;

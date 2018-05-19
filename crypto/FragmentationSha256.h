@@ -29,53 +29,92 @@
 #include "mbed.h"
 #include "sha256.h"
 
+#include "mbed-trace/mbed_trace.h"
+#define TRACE_GROUP  "FSHA"
+
 class FragmentationSha256 {
 public:
     /**
-     * Calculate the SHA256 hash of a file in flash
+     * Calculate the SHA256 hash of a file
      *
-     * @param flash         Instance of BlockDevice
+     * @param file          The file to calculate the hash off
      * @param buffer        A buffer to be used to read into
      * @param buffer_size   The size of the buffer
      */
-    FragmentationSha256(BlockDevice* flash, uint8_t* buffer, size_t buffer_size)
-        : _flash(flash), _buffer(buffer), _buffer_size(buffer_size)
+    FragmentationSha256(FILE *file, uint8_t* buffer, size_t buffer_size)
+        : _file(file), _buffer(buffer), _buffer_size(buffer_size)
     {
     }
 
     /**
      * Calculate the SHA256 hash of the file
      *
-     * @param address   Offset of the file in flash
-     * @param size      Size of the file in flash
+     * @param output Output buffer
      *
-     * @returns SHA256 hash of the file
+     * @returns true if calculating the hash succeeded, false if an error occured
      */
-    void calculate(uint32_t address, size_t size, unsigned char output[32]) {
+    bool calculate(unsigned char output[32]) {
+        return calculate(0, 0, output);
+    }
+
+    /**
+     * Calculate the SHA256 hash of part of the file
+     *
+     * @param offset Offset in the file
+     * @param length Number of bytes to read
+     * @param output Output buffer
+     *
+     * @returns true if calculating the hash succeeded, false if an error occured
+     */
+    bool calculate(size_t offset, size_t length, unsigned char output[32]) {
+        // determine end of file
+        if (fseek(_file, 0, SEEK_END) != 0) {
+            tr_debug("Error when calling fseek");
+            return 0;
+        }
+        size_t bytes_to_read = ftell(_file);
+        tr_debug("File size is %u bytes", bytes_to_read);
+
+        if (length > 0) {
+            bytes_to_read = length;
+        }
+
+        tr_debug("Bytes to read is %u", bytes_to_read);
+
+        // set file position to offset
+        if (fseek(_file, offset, SEEK_SET) != 0) {
+            tr_debug("Error when calling fseek");
+            return 0;
+        }
+
+        uint64_t crc = 0;
+
         mbedtls_sha256_init(&_sha256_ctx);
         mbedtls_sha256_starts(&_sha256_ctx, false /* is224 */);
 
-        size_t offset = address;
-        size_t bytes_left = size;
+        size_t bytes_read;
 
-        while (bytes_left > 0) {
-            size_t length = _buffer_size;
-            if (length > bytes_left) length = bytes_left;
+        while (bytes_to_read > 0) {
+            if (bytes_to_read < _buffer_size) {
+                bytes_read = fread(_buffer, 1, bytes_to_read, _file);
+            }
+            else {
+                bytes_read = fread(_buffer, 1, _buffer_size, _file);
+            }
 
-            _flash->read(_buffer, offset, length);
+            mbedtls_sha256_update(&_sha256_ctx, _buffer, bytes_read);
 
-            mbedtls_sha256_update(&_sha256_ctx, _buffer, length);
-
-            offset += length;
-            bytes_left -= length;
+            bytes_to_read -= bytes_read;
         }
 
         mbedtls_sha256_finish(&_sha256_ctx, output);
         mbedtls_sha256_free(&_sha256_ctx);
+
+        return true;
     }
 
 private:
-    BlockDevice* _flash;
+    FILE* _file;
     uint8_t* _buffer;
     size_t _buffer_size;
     mbedtls_sha256_context _sha256_ctx;

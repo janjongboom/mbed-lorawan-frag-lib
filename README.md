@@ -1,6 +1,6 @@
 # LoRa Alliance Multicast Data Fragmentation Library for mbed OS 5
 
-Implementation of Low-Density Parity-Check coding for forward error correction, plus crypto plugins to do verification of firmware updates. All files integrate with the Mbed `BlockDevice` interface, to prevent loading large blobs into memory. Based on the work by ARM, The Things Network and Semtech.
+Implementation of Low-Density Parity-Check coding for forward error correction, plus crypto plugins to do verification of firmware updates. All files integrate with the Mbed File System interface (LittleFS or FATFS), to prevent loading large blobs into memory. Based on the work by ARM, The Things Network and Semtech.
 
 * `fragmentation\FragmentationSession.h` - LDPC frontend.
 * `fragmentation\FragmentationMath.h` - LDPC implementation.

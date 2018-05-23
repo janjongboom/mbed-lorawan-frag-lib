@@ -87,8 +87,6 @@ public:
             return 0;
         }
 
-        uint64_t crc = 0;
-
         mbedtls_sha256_init(&_sha256_ctx);
         mbedtls_sha256_starts(&_sha256_ctx, false /* is224 */);
 

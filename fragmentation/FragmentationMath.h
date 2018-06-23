@@ -15,6 +15,7 @@ Description: 	Firmware update over the air with LoRa proof of concept
 
 #include "mbed.h"
 #include "mbed_debug.h"
+#include "BlockDevice.h"
 
 #define FRAG_SESSION_ONGOING    0xffffffff
 
@@ -33,12 +34,12 @@ class FragmentationMath
      * FragmentationMath
      * Initializes Semtech's library for Low-Density Parity Check Coding
      *
-     * @param flash          Instance of BlockDevice
+     * @param flash          Instance of wrapped BlockDevice
      * @param frame_count    Number of expected fragments (without redundancy packets)
      * @param frame_size     Size of a fragment (without LoRaWAN header)
      * @param redundancy_max Maximum number of redundancy packets
      */
-    FragmentationMath(BlockDevice *flash, uint16_t frame_count, uint8_t frame_size, uint16_t redundancy_max, size_t flash_offset)
+    FragmentationMath(FragmentationBlockDeviceWrapper *flash, uint16_t frame_count, uint8_t frame_size, uint16_t redundancy_max, size_t flash_offset)
         : _flash(flash), _frame_count(frame_count), _frame_size(frame_size), _redundancy_max(redundancy_max), _flash_offset(flash_offset)
     {
     }
@@ -539,7 +540,7 @@ class FragmentationMath
         }
     }
 
-    BlockDevice *_flash;
+    FragmentationBlockDeviceWrapper *_flash;
     uint16_t _frame_count;
     uint8_t _frame_size;
     uint16_t _redundancy_max;

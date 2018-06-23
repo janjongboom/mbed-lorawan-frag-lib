@@ -18,6 +18,11 @@
 #ifndef _MBED_LORAWAN_FRAG_LIB_H
 #define _MBED_LORAWAN_FRAG_LIB_H
 
+#ifdef TARGET_SIMULATOR
+#define debug printf
+#endif
+
+#include "FragmentationBlockDeviceWrapper.h"
 #include "FragmentationCrc64.h"
 #include "FragmentationEcdsaVerify.h"
 #include "FragmentationRsaVerify.h"

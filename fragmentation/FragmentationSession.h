@@ -19,6 +19,8 @@
 #define _MBEDFRAG_FRAGMENTATION_SESSION_H
 
 #include "mbed.h"
+#include "BlockDevice.h"
+#include "FragmentationBlockDeviceWrapper.h"
 #include "FragmentationMath.h"
 #include "mbed_debug.h"
 
@@ -50,10 +52,10 @@ class FragmentationSession {
 public:
     /**
      * Start a fragmentation session
-     * @param flash A flash interface
+     * @param flash A block device that is wrapped for unaligned operations
      * @param opts  List of options for this session
      */
-    FragmentationSession(BlockDevice* flash, FragmentationSessionOpts_t opts)
+    FragmentationSession(FragmentationBlockDeviceWrapper* flash, FragmentationSessionOpts_t opts)
         : _flash(flash), _opts(opts),
           _math(flash, opts.NumberOfFragments, opts.FragmentSize, opts.RedundancyPackets, opts.FlashOffset)
     {
@@ -73,6 +75,11 @@ public:
      *          FRAG_FLASH_WRITE_ERROR if clearing the flash failed.
     */
     FragResult initialize() {
+        if (_flash->init() != BD_ERROR_OK) {
+            debug("[FragmentationSession] Could not initialize FragmentationBlockDeviceWrapper\n");
+            return FRAG_NO_MEMORY;
+        }
+
         // initialize the memory required for the Math module
         if (!_math.initialize()) {
             debug("[FragmentationSession] Could not initialize FragmentationMath\n");
@@ -154,7 +161,7 @@ public:
     }
 
 private:
-    BlockDevice* _flash;
+    FragmentationBlockDeviceWrapper* _flash;
     FragmentationSessionOpts_t _opts;
     FragmentationMath _math;
 };

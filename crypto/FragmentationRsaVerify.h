@@ -27,6 +27,7 @@
 #if defined(MBEDTLS_RSA_C)
 
 #include "mbed.h"
+#include "BlockDevice.h"
 #include "mbedtls/pk.h"
 #include "mbed_debug.h"
 

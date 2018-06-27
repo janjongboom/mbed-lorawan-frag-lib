@@ -64,7 +64,8 @@ public:
      * Initialize the block device and the wrapper, this will allocate one page of memory
      */
     int init() {
-        if (_page_buffer) free(_page_buffer);
+        // already initialised
+        if (_page_buffer) return;
 
         int init_ret = _block_device->init();
         if (init_ret != 0) {

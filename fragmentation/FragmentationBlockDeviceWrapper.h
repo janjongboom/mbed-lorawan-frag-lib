@@ -65,7 +65,7 @@ public:
      */
     int init() {
         // already initialised
-        if (_page_buffer) return;
+        if (_page_buffer) return BD_ERROR_OK;
 
         int init_ret = _block_device->init();
         if (init_ret != 0) {

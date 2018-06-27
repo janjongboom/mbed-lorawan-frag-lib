@@ -126,7 +126,7 @@ public:
         }
 
         // redundancy packet coming in
-        FragmentationSessionParams_t params;
+        FragmentationMathSessionParams_t params;
         params.NbOfFrag = _opts.NumberOfFragments;
         params.Redundancy = _opts.RedundancyPackets;
         params.DataSize = _opts.FragmentSize;
@@ -158,6 +158,10 @@ public:
      */
     int get_lost_frame_count() {
         return _math.get_lost_frame_count();
+    }
+
+    FragmentationSessionOpts_t get_options() {
+        return _opts;
     }
 
 private:

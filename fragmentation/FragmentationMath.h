@@ -24,7 +24,7 @@ typedef struct
     int NbOfFrag;   // NbOfUtilFrames=SIZEOFFRAMETRANSMIT;
     int Redundancy; // nbr of extra frame
     int DataSize;   // included the lorawan specific data hdr,devadrr,...but without mic and payload decrypted
-} FragmentationSessionParams_t;
+} FragmentationMathSessionParams_t;
 
 // This file contains functions for the correction mechanisms designed by Semtech
 class FragmentationMath
@@ -133,7 +133,7 @@ class FragmentationMath
      * @returns FRAG_SESSION_ONGOING if the packets are not completed yet,
                 any other value between 0..FRAG_SESSION_ONGOING if the packet was deconstructed
      */
-    int process_redundant_frame(uint16_t frameCounter, uint8_t *rowData, FragmentationSessionParams_t sFotaParameter)
+    int process_redundant_frame(uint16_t frameCounter, uint8_t *rowData, FragmentationMathSessionParams_t sFotaParameter)
     {
         int l;
         int i;

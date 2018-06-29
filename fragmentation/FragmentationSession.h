@@ -86,12 +86,6 @@ public:
             return FRAG_NO_MEMORY;
         }
 
-        // also clear out the flash pages...
-        if (_flash->erase(_opts.FlashOffset, _opts.NumberOfFragments * _opts.FragmentSize) != 0) {
-            debug("[FragmentationSession] Could not clear out flash\n");
-            return FRAG_FLASH_WRITE_ERROR;
-        }
-
         return FRAG_OK;
     }
 

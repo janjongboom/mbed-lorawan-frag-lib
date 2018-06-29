@@ -177,28 +177,6 @@ public:
         return BD_ERROR_OK;
     }
 
-    int erase(bd_addr_t addr, bd_size_t size) {
-        if (!_page_buffer) return BD_ERROR_NOT_INITIALIZED;
-
-        frag_debug("[FBDW] erase addr=%lu size=%d\n", addr, size);
-
-        uint32_t start_page = addr / _page_size; // this gets auto-rounded
-        uint32_t end_page = (addr + size) / _page_size;
-
-        memset(_page_buffer, 0xff, _page_size);
-
-        for (size_t ix = start_page; ix <= end_page; ix++) {
-            int r = _block_device->program(_page_buffer, ix * _page_size, _page_size);
-            if (r != 0) return r;
-        }
-
-        if (_last_page >= start_page && _last_page <= end_page) {
-            _last_page = 0xffffffff;
-        }
-
-        return BD_ERROR_OK;
-    }
-
 private:
     BlockDevice*    _block_device;
     bd_size_t       _page_size;

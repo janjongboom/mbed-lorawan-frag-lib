@@ -17,6 +17,9 @@ Description: 	Firmware update over the air with LoRa proof of concept
 #include "mbed_debug.h"
 #include "BlockDevice.h"
 
+#include "mbed_trace.h"
+#define TRACE_GROUP "FMTH"
+
 #define FRAG_SESSION_ONGOING    0xffffffff
 
 typedef struct
@@ -105,7 +108,7 @@ class FragmentationMath
 
         if (!matrixM2B || !missingFrameIndex || !matrixRow || !matrixDataTemp || !dataTempVector || !dataTempVector2 || !s)
         {
-            debug("[FragmentationMath] Could not allocate memory...\n");
+            tr_warn("Could not allocate memory");
             return false;
         }
 
@@ -303,8 +306,10 @@ class FragmentationMath
     {
         int i;
         uint8_t *dataTemp = (uint8_t *)malloc(size);
-        if (!dataTemp)
-            debug("[FragmentationMath] XorLineData malloc out of memory!\n");
+        if (!dataTemp) {
+            tr_warn("XorLineData malloc out of memory!");
+            return;
+        }
 
         for (i = 0; i < size; i++)
         {
@@ -328,8 +333,10 @@ class FragmentationMath
     {
         int i;
         bool *dataTemp = (bool *)malloc(size);
-        if (!dataTemp)
-            debug("[FragmentationMath] XorLineBool malloc failed\n");
+        if (!dataTemp) {
+            tr_warn("XorLineBool malloc failed");
+            return;
+        }
 
         for (i = 0; i < size; i++)
         {

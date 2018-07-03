@@ -31,6 +31,9 @@
 #include "mbedtls/pk.h"
 #include "mbed_debug.h"
 
+#include "mbed_trace.h"
+#define TRACE_GROUP "FECD"
+
 class FragmentationEcdsaVerify {
 public:
     /**
@@ -56,13 +59,13 @@ public:
 
         ret = mbedtls_pk_parse_public_key(&pk, pubKey, pubKeySize);
         if (ret != 0) {
-            debug("ECDSA failed to parse public key (-0x%04x)\n", ret);
+            tr_warn("ECDSA failed to parse public key (-0x%04x)", ret);
             return false;
         }
 
         ret = mbedtls_pk_verify(&pk, MBEDTLS_MD_SHA256, hash, 0, signature, signature_size);
         if (ret != 0) {
-            debug("ECDSA failed to verify message (-0x%04x)\n", ret);
+            tr_debug("ECDSA failed to verify message (-0x%04x)", ret);
             return false;
         }
 

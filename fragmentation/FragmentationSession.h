@@ -24,6 +24,9 @@
 #include "FragmentationMath.h"
 #include "mbed_debug.h"
 
+#include "mbed_trace.h"
+#define TRACE_GROUP "FSES"
+
 /**
  * The binary is laid out like this:
  * First, the original binary, split by FragmentSize. Padding should indicate when the binary stops (offset from end of last fragment).
@@ -57,14 +60,15 @@ public:
      */
     FragmentationSession(FragmentationBlockDeviceWrapper* flash, FragmentationSessionOpts_t opts)
         : _flash(flash), _opts(opts),
-          _math(flash, opts.NumberOfFragments, opts.FragmentSize, opts.RedundancyPackets, opts.FlashOffset)
+          _math(flash, opts.NumberOfFragments, opts.FragmentSize, opts.RedundancyPackets, opts.FlashOffset),
+          _frames_received(0)
     {
-        debug("FragmentationSession starting:\n");
-        debug("\tNumberOfFragments:   %d\n", opts.NumberOfFragments);
-        debug("\tFragmentSize:        %d\n", opts.FragmentSize);
-        debug("\tPadding:             %d\n", opts.Padding);
-        debug("\tMaxRedundancy:       %d\n", opts.RedundancyPackets);
-        debug("\tFlashOffset:         0x%x\n", opts.FlashOffset);
+        tr_debug("FragmentationSession starting:");
+        tr_debug("\tNumberOfFragments:   %d", opts.NumberOfFragments);
+        tr_debug("\tFragmentSize:        %d", opts.FragmentSize);
+        tr_debug("\tPadding:             %d", opts.Padding);
+        tr_debug("\tMaxRedundancy:       %d", opts.RedundancyPackets);
+        tr_debug("\tFlashOffset:         0x%x", opts.FlashOffset);
     }
 
     /**
@@ -76,13 +80,13 @@ public:
     */
     FragResult initialize() {
         if (_flash->init() != BD_ERROR_OK) {
-            debug("[FragmentationSession] Could not initialize FragmentationBlockDeviceWrapper\n");
+            tr_warn("Could not initialize FragmentationBlockDeviceWrapper");
             return FRAG_NO_MEMORY;
         }
 
         // initialize the memory required for the Math module
         if (!_math.initialize()) {
-            debug("[FragmentationSession] Could not initialize FragmentationMath\n");
+            tr_warn("Could not initialize FragmentationMath");
             return FRAG_NO_MEMORY;
         }
 
@@ -101,6 +105,8 @@ public:
      */
     FragResult process_frame(uint16_t index, uint8_t* buffer, size_t size) {
         if (size != _opts.FragmentSize) return FRAG_SIZE_INCORRECT;
+
+        _frames_received++;
 
         // the first X packets contain the binary as-is... If that is the case, just store it in flash.
         // index is 1-based
@@ -154,6 +160,13 @@ public:
         return _math.get_lost_frame_count();
     }
 
+    /**
+     * Get number of frames received (in total)
+     */
+    uint16_t get_received_frame_count() {
+        return _frames_received;
+    }
+
     FragmentationSessionOpts_t get_options() {
         return _opts;
     }
@@ -162,6 +175,8 @@ private:
     FragmentationBlockDeviceWrapper* _flash;
     FragmentationSessionOpts_t _opts;
     FragmentationMath _math;
+
+    uint16_t _frames_received;
 };
 
 #endif // _MBEDFRAG_FRAGMENTATION_SESSION_H

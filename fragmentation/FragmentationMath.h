@@ -258,6 +258,10 @@ class FragmentationMath
     void StoreRowInFlash(uint8_t *rowData, int index)
     {
         _flash->program(rowData, _flash_offset + (_frame_size * index), _frame_size);
+#if defined(MBED_CONF_LORAWAN_FRAG_LIB_FLASH_WRITE_DELAY_MS) && MBED_CONF_LORAWAN_FRAG_LIB_FLASH_WRITE_DELAY_MS > 0
+        wait_ms(MBED_CONF_LORAWAN_FRAG_LIB_FLASH_WRITE_DELAY_MS);
+        printf("wait_ms(%d)\n", MBED_CONF_LORAWAN_FRAG_LIB_FLASH_WRITE_DELAY_MS);
+#endif
     }
 
     uint16_t FindMissingFrameIndex(uint16_t x)

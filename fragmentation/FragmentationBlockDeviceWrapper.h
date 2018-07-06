@@ -40,6 +40,7 @@
 enum frag_bd_error {
     BD_ERROR_NO_MEMORY          = -4002,
     BD_ERROR_NOT_INITIALIZED    = -4003,
+    BD_ERROR_UNALIGNED_ERASE    = -4004
 };
 
 class FragmentationBlockDeviceWrapper {
@@ -73,6 +74,12 @@ public:
         }
 
         _page_size = _block_device->get_read_size();
+
+        // can use a bigger page size if it's small
+        if (_page_size < 256 && 528 % _page_size == 0) {
+            _page_size = 528;
+        }
+
         _total_size = _block_device->size();
 
         void *buffer = calloc((size_t)_page_size, 1);
@@ -127,7 +134,7 @@ public:
             // }
             // frag_debug("\n");
 
-            // and write back
+            // erase the page and write back
             r = _block_device->program(_page_buffer, page * _page_size, _page_size);
             if (r != 0) return r;
 
@@ -172,6 +179,40 @@ public:
             buffer += length;
 
             _last_page = page;
+        }
+
+        return BD_ERROR_OK;
+    }
+
+    /**
+     * Erase part of the block device - needs to be erase block aligned
+     *
+     * **NOTE:** Size will be rounded up to match page alignment!
+     *
+     * @param addr Address, needs to be erase block aligned!
+     * @param size Size that needs to be erased, will be rounded up to match erase size alignment!
+     */
+    int erase(bd_addr_t addr, bd_size_t size) {
+        bd_size_t erase_size = _block_device->get_erase_size();
+        printf("bd erase size is %llu\n", erase_size);
+
+        if (addr % erase_size != 0) {
+            printf("Unaligned erase\n");
+            return BD_ERROR_UNALIGNED_ERASE;
+        }
+
+        bd_size_t pages = (addr + size % erase_size == 0) ? size / erase_size : (size / erase_size) + 1;
+        printf("no of pages to erase is %llu\n", pages);
+
+        for (bd_size_t ix = 0; ix < pages; ix++) {
+            int r = _block_device->erase(addr + (pages * erase_size), erase_size);
+            if (r != BD_ERROR_OK) {
+                printf("page %llu erase failed (%d)\n", ix, r);
+                return r;
+            }
+            else {
+                printf("page %llu erase OK\n", ix);
+            }
         }
 
         return BD_ERROR_OK;

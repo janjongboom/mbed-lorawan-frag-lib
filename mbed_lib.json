@@ -1,0 +1,9 @@
+{
+    "name": "lorawan-frag-lib",
+    "config": {
+        "flash-write-delay-ms": {
+            "help": "Optional delay (in ms.) between writes, can be used for buggy block device drivers to pause between writes",
+            "value": 0
+        }
+    }
+}

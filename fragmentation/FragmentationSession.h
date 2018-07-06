@@ -84,6 +84,11 @@ public:
             return FRAG_NO_MEMORY;
         }
 
+        if (_flash->erase(_opts.FlashOffset - 528, (_opts.NumberOfFragments * _opts.FragmentSize) - _opts.Padding + 528) != BD_ERROR_OK) {
+            tr_warn("Could not erase flash sections\n");
+            return FRAG_FLASH_WRITE_ERROR;
+        }
+
         // initialize the memory required for the Math module
         if (!_math.initialize()) {
             tr_warn("Could not initialize FragmentationMath");
@@ -115,6 +120,10 @@ public:
             if (r != 0) {
                 return FRAG_FLASH_WRITE_ERROR;
             }
+
+#if defined(MBED_CONF_LORAWAN_FRAG_LIB_FLASH_WRITE_DELAY_MS) && MBED_CONF_LORAWAN_FRAG_LIB_FLASH_WRITE_DELAY_MS > 0
+            wait_ms(MBED_CONF_LORAWAN_FRAG_LIB_FLASH_WRITE_DELAY_MS);
+#endif
 
             _math.set_frame_found(index);
 

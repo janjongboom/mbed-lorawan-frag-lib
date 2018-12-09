@@ -20,7 +20,7 @@ Description: 	Firmware update over the air with LoRa proof of concept
 #include "mbed_trace.h"
 #define TRACE_GROUP "FMTH"
 
-#define FRAG_SESSION_ONGOING    0xffffffff
+#define FRAG_SESSION_ONGOING    0xffff
 
 typedef struct
 {
@@ -238,7 +238,7 @@ class FragmentationMath
             }
         }
 
-        return 0xffffffff;
+        return FRAG_SESSION_ONGOING;
     }
 
     /**

@@ -1,4 +1,4 @@
-# LoRa Alliance Multicast Data Fragmentation Library for mbed OS 5
+# This library has been superseded by [mbed-lorawan-update-client](https://github.com/janjongboom/mbed-lorawan-update-client)
 
 Implementation of Low-Density Parity-Check coding for forward error correction, plus crypto plugins to do verification of firmware updates. All files integrate with the Mbed `BlockDevice` interface, to prevent loading large blobs into memory. Based on the work by Arm, The Things Network and Semtech.
 

@@ -78,6 +78,10 @@ class FragmentationMath
         {
             free(s);
         }
+        if (xorRowDataTemp)
+        {
+            free(xorRowDataTemp);
+        }
     }
 
     /**
@@ -101,12 +105,20 @@ class FragmentationMath
         matrixDataTemp = (uint8_t *)calloc(_frame_size, 1);
         dataTempVector = (bool *)calloc(_redundancy_max, 1);
         dataTempVector2 = (bool *)calloc(_redundancy_max, 1);
+        xorRowDataTemp = (uint8_t *)calloc(_frame_size, 1);
         s = (bool *)calloc(_redundancy_max, 1);
 
         numberOfLoosingFrame = 0;
         lastReceiveFrameCnt = 0;
 
-        if (!matrixM2B || !missingFrameIndex || !matrixRow || !matrixDataTemp || !dataTempVector || !dataTempVector2 || !s)
+        if (!matrixM2B ||
+            !missingFrameIndex ||
+            !matrixRow ||
+            !matrixDataTemp ||
+            !dataTempVector ||
+            !dataTempVector2 ||
+            !s ||
+            !xorRowDataTemp)
         {
             tr_warn("Could not allocate memory");
             return false;
@@ -152,6 +164,8 @@ class FragmentationMath
         memset(matrixDataTemp, 0, _frame_size);
         memset(dataTempVector, 0, _redundancy_max);
         memset(dataTempVector2, 0, _redundancy_max);
+        // we should not mess with rowData
+        memcpy(xorRowDataTemp, rowData, sFotaParameter.DataSize);
 
         FindMissingReceiveFrame(frameCounter);
 
@@ -165,7 +179,8 @@ class FragmentationMath
                 { // xor with already receive frame
                     matrixRow[l] = 0;
                     GetRowInFlash(l, matrixDataTemp);
-                    XorLineData(rowData, matrixDataTemp, sFotaParameter.DataSize);
+                    XorLineData(xorRowDataTemp, matrixDataTemp, sFotaParameter.DataSize);
+
                 }
                 else
                 { // fill the "little" boolean matrix m2
@@ -186,7 +201,7 @@ class FragmentationMath
                 XorLineBool(dataTempVector, dataTempVector2, numberOfLoosingFrame);
                 li = FindMissingFrameIndex(firstOneInRow); // have to store it in the mi th position of the missing frame
                 GetRowInFlash(li, matrixDataTemp);
-                XorLineData(rowData, matrixDataTemp, sFotaParameter.DataSize);
+                XorLineData(xorRowDataTemp, matrixDataTemp, sFotaParameter.DataSize);
                 if (VectorIsNull(dataTempVector, numberOfLoosingFrame))
                 {
                     noInfo = 1;
@@ -198,7 +213,7 @@ class FragmentationMath
             {
                 PushLineToBinaryMatrix(dataTempVector, firstOneInRow, numberOfLoosingFrame);
                 li = FindMissingFrameIndex(firstOneInRow);
-                StoreRowInFlash(rowData, li);
+                StoreRowInFlash(xorRowDataTemp, li);
                 s[firstOneInRow] = 1;
                 m2l++;
             }
@@ -222,8 +237,8 @@ class FragmentationMath
 
                                 lj = FindMissingFrameIndex(j);
 
-                                GetRowInFlash(lj, rowData);
-                                XorLineData(matrixDataTemp, rowData, sFotaParameter.DataSize);
+                                GetRowInFlash(lj, xorRowDataTemp);
+                                XorLineData(matrixDataTemp, xorRowDataTemp, sFotaParameter.DataSize);
                             }
                         }
                         StoreRowInFlash(matrixDataTemp, li);
@@ -252,12 +267,18 @@ class FragmentationMath
   private:
     void GetRowInFlash(int l, uint8_t *rowData)
     {
-        _flash->read(rowData, _flash_offset + (l * _frame_size), _frame_size);
+        int r = _flash->read(rowData, _flash_offset + (l * _frame_size), _frame_size);
+        if (r != 0) {
+            tr_warn("GetRowInFlash for row %d failed (%d)", l, r);
+        }
     }
 
     void StoreRowInFlash(uint8_t *rowData, int index)
     {
-        _flash->program(rowData, _flash_offset + (_frame_size * index), _frame_size);
+        int r = _flash->program(rowData, _flash_offset + (_frame_size * index), _frame_size);
+        if (r != 0) {
+            tr_warn("StoreRowInFlash for row %d failed (%d)", index, r);
+        }
     }
 
     uint16_t FindMissingFrameIndex(uint16_t x)
@@ -561,6 +582,7 @@ class FragmentationMath
     bool *dataTempVector;
     bool *dataTempVector2;
     bool *s;
+    uint8_t *xorRowDataTemp;
 
     int numberOfLoosingFrame;
     int lastReceiveFrameCnt;
